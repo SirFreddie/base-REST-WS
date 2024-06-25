@@ -1,5 +1,5 @@
+import { Socket, Server as WebSocketServer } from "socket.io";
 import { Server } from "http";
-import { WebSocket, WebSocketServer } from "ws";
 
 interface Options {
   server: Server;
@@ -13,7 +13,7 @@ export class WssService {
   private constructor(options: Options) {
     const { server, path = "/ws" } = options;
 
-    this.wss = new WebSocketServer({ server, path });
+    this.wss = new WebSocketServer(server);
     this.start();
   }
 
@@ -29,19 +29,11 @@ export class WssService {
     WssService._instance = new WssService(options);
   }
 
-  public send(type: string, payload: Object) {
-    this.wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ type, payload }));
-      }
-    });
-  }
-
   public start() {
-    this.wss.on("connection", (ws: WebSocket, req: any) => {
-      console.log(`Client ${req.headers["sec-websocket-key"]} connected`);
-      ws.on("close", () => {
-        console.log("Client disconnected");
+    this.wss.on("connection", (socket: Socket) => {
+      console.log(`Client ${socket.id} connected`);
+      socket.on("disconnect", () => {
+        console.log(`Client ${socket.id} disconnected`);
       });
     });
   }
